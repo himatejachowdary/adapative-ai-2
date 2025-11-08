@@ -7,11 +7,13 @@ import {
   DialogTitle,
   DialogClose
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { User, X } from "lucide-react";
 import Link from "next/link";
+import { useAuth, useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -19,6 +21,15 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
+  const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/');
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="glassmorphic text-white max-w-md">
@@ -28,13 +39,14 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
           </DialogClose>
         <DialogHeader className="items-center text-center space-y-4">
             <Avatar className="h-24 w-24 border-2 border-white/20">
+                {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'User'}/>}
                 <AvatarFallback className="bg-[#1A1A1A]">
                     <User className="h-12 w-12 text-[#AAAAAA]" />
                 </AvatarFallback>
             </Avatar>
           <div className="space-y-1">
-            <DialogTitle className="text-2xl font-bold">Alex Johnson</DialogTitle>
-            <p className="text-[#AAAAAA] text-sm">alex.j@google.com</p>
+            <DialogTitle className="text-2xl font-bold">{user?.displayName || 'User'}</DialogTitle>
+            <p className="text-[#AAAAAA] text-sm">{user?.email || 'No email provided'}</p>
           </div>
         </DialogHeader>
         
@@ -44,27 +56,27 @@ export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
             <h3 className="font-semibold text-white mb-2">Personal Information</h3>
             <div className="flex justify-between">
                 <span className="text-[#AAAAAA]">Full Name:</span>
-                <span className="font-medium text-white">Alex Johnson</span>
+                <span className="font-medium text-white">{user?.displayName || 'Not provided'}</span>
             </div>
              <div className="flex justify-between">
                 <span className="text-[#AAAAAA]">Email:</span>
-                <span className="font-medium text-white">alex.j@google.com</span>
+                <span className="font-medium text-white">{user?.email || 'Not provided'}</span>
             </div>
              <div className="flex justify-between">
                 <span className="text-[#AAAAAA]">Phone:</span>
-                <span className="font-medium text-white">Not provided</span>
+                <span className="font-medium text-white">{user?.phoneNumber || 'Not provided'}</span>
             </div>
             <div className="flex justify-between">
                 <span className="text-[#AAAAAA]">Account Type:</span>
-                <span className="font-medium text-white">Google Linked Account</span>
+                <span className="font-medium text-white">{user?.providerData?.[0]?.providerId === 'password' ? 'Email Account' : 'Google Linked Account'}</span>
             </div>
         </div>
 
         <Separator className="my-4 border-[#333333]" />
 
         <div className="px-6 pb-6">
-            <Button asChild variant="secondary" className="w-full bg-[#1A1A1A] text-white soft-glow-border">
-              <Link href="/">Logout</Link>
+            <Button onClick={handleLogout} variant="secondary" className="w-full bg-[#1A1A1A] text-white soft-glow-border">
+              Logout
             </Button>
         </div>
       </DialogContent>
