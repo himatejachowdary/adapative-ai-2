@@ -19,10 +19,10 @@ import {
 } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useAuth, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, X } from 'lucide-react';
-import { updateEmail } from 'firebase/auth';
+import { updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
 export function UserProfilePanel() {
   const { user } = useUser();
@@ -30,47 +30,80 @@ export function UserProfilePanel() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [fullName, setFullName] = useState(user?.displayName || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [level, setLevel] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const isGoogleProvider = user?.providerData[0]?.providerId === 'google.com';
 
   useEffect(() => {
-    if (user) {
-      setFullName(user.displayName || '');
-      setEmail(user.email || '');
-      // In a real app, you would fetch phone and level from Firestore
+    async function loadUserProfile() {
+      if (!user || !firestore) return;
+      setIsLoading(true);
+      try {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          setFullName(userData.fullName || user.displayName || '');
+          setEmail(userData.email || user.email || '');
+          setPhone(userData.phone || '');
+          setLevel(userData.level || '');
+        } else {
+            // Fallback for users that might exist in auth but not firestore
+            setFullName(user.displayName || '');
+            setEmail(user.email || '');
+        }
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Failed to load profile',
+            description: 'Could not fetch your data from the server.'
+        })
+      } finally {
+        setIsLoading(false);
+        setHasChanges(false);
+      }
     }
-  }, [user]);
+    loadUserProfile();
+  }, [user, firestore, toast]);
 
   const handleSave = async () => {
     if (!user || !firestore) return;
     setIsSaving(true);
     
     try {
-      // If email was changed and it's not a Google account
-      if (email !== user.email && user.providerData[0]?.providerId === 'password') {
-         if(auth.currentUser) {
-            await updateEmail(auth.currentUser, email);
-         }
+      if (email !== user.email && !isGoogleProvider && auth.currentUser) {
+         // This is a sensitive operation and may require re-authentication.
+         // For this implementation, we will assume re-authentication is handled if needed.
+         // In a real app, you would prompt for the user's password.
+         await updateEmail(auth.currentUser, email);
       }
 
-      await setDoc(doc(firestore, 'users', user.uid), {
+      const userDocRef = doc(firestore, 'users', user.uid);
+      await setDoc(userDocRef, {
         fullName: fullName,
         email: email,
         phone: phone,
         level: level,
-        updatedAt: new Date().toISOString(),
+        updatedAt: serverTimestamp(),
       }, { merge: true });
       
-      toast({ title: 'Profile updated' });
+      // Update localStorage
+      localStorage.setItem('am_user_name', fullName);
+      localStorage.setItem('am_user_level', level);
+      
+      toast({ title: 'Profile updated successfully' });
       setHasChanges(false);
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error updating profile',
+        title: 'Profile update failed',
         description: error.message,
       });
     } finally {
@@ -86,7 +119,7 @@ export function UserProfilePanel() {
 
   return (
     <>
-      <SheetHeader className="p-6">
+      <SheetHeader className="p-6 border-b border-[#2b2b2b]">
         <SheetTitle className="text-white">Profile</SheetTitle>
         <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
           <X className="h-4 w-4" />
@@ -94,11 +127,16 @@ export function UserProfilePanel() {
         </SheetClose>
       </SheetHeader>
       <div className="flex h-full flex-col">
+        {isLoading ? (
+             <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+             </div>
+        ) : (
         <div className="flex-1 overflow-y-auto p-6">
           <Tabs defaultValue="details">
             <TabsList className="grid w-full grid-cols-2 bg-[#0c0c0c] border border-[#2b2b2b]">
               <TabsTrigger value="details" className="data-[state=active]:bg-[#222]">Details</TabsTrigger>
-              <TabsTrigger value="security" className="data-[state=active]:bg-[#222]">Security</TabsTrigger>
+              <TabsTrigger value="security" className="data-[state=active]:bg-[#222]" disabled>Security</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-6 space-y-6">
               <div className="space-y-2">
@@ -107,11 +145,11 @@ export function UserProfilePanel() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[#B5B5B5]">Email</Label>
-                <Input id="email" type="email" value={email} onChange={onValueChange(setEmail)} readOnly={user?.providerData[0]?.providerId !== 'password'} className="rounded-2xl border-[#2B2B2B] bg-[#101010] text-white read-only:opacity-70" />
+                <Input id="email" type="email" value={email} onChange={onValueChange(setEmail)} readOnly={isGoogleProvider} className="rounded-2xl border-[#2B2B2B] bg-[#101010] text-white read-only:opacity-70 read-only:cursor-not-allowed" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-[#B5B5B5]">Phone</Label>
-                <Input id="phone" type="tel" value={phone} onChange={onValueChange(setPhone)} className="rounded-2xl border-[#2B2B2B] bg-[#101010] text-white" />
+                <Input id="phone" type="tel" placeholder="Your phone number" value={phone} onChange={onValueChange(setPhone)} className="rounded-2xl border-[#2B2B2B] bg-[#101010] text-white" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="level" className="text-[#B5B5B5]">Level</Label>
@@ -120,9 +158,9 @@ export function UserProfilePanel() {
                     <SelectValue placeholder="Select your level" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#101010] text-white border-[#2b2b2b]">
-                    <SelectItem value="student">School Student</SelectItem>
-                    <SelectItem value="undergraduate">Undergraduate</SelectItem>
-                    <SelectItem value="employee">Software Employee</SelectItem>
+                    <SelectItem value="School Student">School Student</SelectItem>
+                    <SelectItem value="Undergraduate">Undergraduate</SelectItem>
+                    <SelectItem value="Software Employee">Software Employee</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -132,12 +170,13 @@ export function UserProfilePanel() {
              </TabsContent>
           </Tabs>
         </div>
+        )}
         <SheetFooter className="sticky bottom-0 bg-[#111] p-6 border-t border-[#2b2b2b]">
           <div className="flex w-full gap-4">
             <SheetClose asChild>
               <Button variant="outline" className="w-full border-[#2B2B2B] text-white hover:bg-gray-800">Cancel</Button>
             </SheetClose>
-            <Button onClick={handleSave} disabled={!hasChanges || isSaving} className="w-full bg-[#1A1A1A] border-[#3A3A3A] text-white hover:bg-[#262626]">
+            <Button onClick={handleSave} disabled={!hasChanges || isSaving || isLoading} className="w-full bg-[#1A1A1A] border-[#3A3A3A] text-white hover:bg-[#262626]">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save'}
             </Button>
           </div>
