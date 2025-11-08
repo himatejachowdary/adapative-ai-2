@@ -6,6 +6,7 @@ import Logo from '@/components/auth/logo';
 import { Send, User } from 'lucide-react';
 import { ProfileModal } from '@/components/app/profile-modal';
 import Link from 'next/link';
+import { useUser } from '@/firebase';
 
 interface Message {
   id: number;
@@ -15,6 +16,7 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -49,7 +51,7 @@ export default function ChatPage() {
     <div className="flex h-screen w-full flex-col bg-black">
       <header className="fixed top-0 z-20 flex h-16 w-full items-center justify-between border-b border-[#333333] bg-black/80 px-4 backdrop-blur-sm sm:px-6">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Logo className="h-8 w-8" />
+          <Logo className="h-8 w-8 text-white" />
           <span className="text-lg font-bold text-white">AdaptiveMind AI</span>
         </Link>
         <Button
@@ -66,10 +68,10 @@ export default function ChatPage() {
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <div className="opacity-50">
-              <Logo className="h-24 w-24" />
+              <Logo className="h-24 w-24 text-gray-400" />
             </div>
             <h1 className="mt-4 text-2xl font-bold text-white">
-              Welcome, User
+              Welcome, {user?.displayName || 'User'}
             </h1>
             <p className="text-[#AAAAAA]">How can I help you learn today?</p>
           </div>
@@ -84,7 +86,7 @@ export default function ChatPage() {
               >
                 {message.sender === 'ai' && (
                   <div className="h-8 w-8 flex-shrink-0">
-                    <Logo className="h-full w-full" />
+                    <Logo className="h-full w-full text-white" />
                   </div>
                 )}
                 <div

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from "next/link";
@@ -44,7 +45,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <Logo className="w-8 h-8" />
+            <Logo className="w-8 h-8 text-white" />
             <span className="text-lg font-headline group-data-[collapsible=icon]:hidden">
               AdaptiveMind
             </span>
