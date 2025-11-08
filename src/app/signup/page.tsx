@@ -14,7 +14,7 @@ import {
   useUser,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { updateProfile } from 'firebase/auth';
 import Logo from '@/components/auth/logo';
 
@@ -84,7 +84,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-black p-4">
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-black p-4">
+      <Link href="/" className="absolute top-8 left-8 text-[#E5E5E5] hover:text-white transition-colors">
+          <ArrowLeft size={24} />
+      </Link>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
             <Link href="/" className='flex justify-center items-center gap-3 mb-6'>
