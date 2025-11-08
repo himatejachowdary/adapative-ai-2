@@ -1,0 +1,307 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the AdaptiveMind AI platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "name": {
+          "type": "string",
+          "description": "User's display name or full name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LearningPath": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LearningPath",
+      "type": "object",
+      "description": "Represents a personalized learning path generated for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LearningPath entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N LearningPath)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name or title of the learning path."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the learning path."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the learning path was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the learning path was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "name",
+        "description",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LearningResource": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LearningResource",
+      "type": "object",
+      "description": "Represents a learning resource (article, video, exercise) within the AdaptiveMind AI platform.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LearningResource entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the learning resource."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the learning resource."
+        },
+        "url": {
+          "type": "string",
+          "description": "URL or link to the learning resource.",
+          "format": "uri"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of learning resource (e.g., article, video, exercise)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the learning resource was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the learning resource was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "url",
+        "type",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "LearningPathResource": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LearningPathResource",
+      "type": "object",
+      "description": "Connects Learning Paths to Learning Resources",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the LearningPathResource entity."
+        },
+        "learningPathId": {
+          "type": "string",
+          "description": "Reference to LearningPath. (Relationship: LearningPath 1:N LearningPathResource)"
+        },
+        "learningResourceId": {
+          "type": "string",
+          "description": "Reference to LearningResource. (Relationship: LearningResource 1:N LearningPathResource)"
+        },
+        "order": {
+          "type": "number",
+          "description": "Order of the resource in the learning path."
+        }
+      },
+      "required": [
+        "id",
+        "learningPathId",
+        "learningResourceId",
+        "order"
+      ]
+    },
+    "UserProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProgress",
+      "type": "object",
+      "description": "Represents a user's progress on a specific learning resource within a learning path.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N UserProgress)"
+        },
+        "learningResourceId": {
+          "type": "string",
+          "description": "Reference to LearningResource. (Relationship: LearningResource 1:N UserProgress)"
+        },
+        "learningPathId": {
+          "type": "string",
+          "description": "Reference to LearningPath. (Relationship: LearningPath 1:N UserProgress)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the learning resource (e.g., not started, in progress, completed)."
+        },
+        "progress": {
+          "type": "number",
+          "description": "Numerical representation of the user's progress (e.g., percentage completed)."
+        },
+        "lastAccessedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user last accessed the learning resource.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "learningResourceId",
+        "learningPathId",
+        "status",
+        "progress",
+        "lastAccessedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Path-based ownership ensures only the user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/learningPaths/{learningPathId}",
+        "definition": {
+          "entityName": "LearningPath",
+          "schema": {
+            "$ref": "#/backend/entities/LearningPath"
+          },
+          "description": "Stores learning paths specific to a user. Includes denormalized 'userId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "learningPathId",
+              "description": "The unique identifier of the learning path."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learningResources/{learningResourceId}",
+        "definition": {
+          "entityName": "LearningResource",
+          "schema": {
+            "$ref": "#/backend/entities/LearningResource"
+          },
+          "description": "Stores all learning resources available in the application.  No specific authorization details as the requirements did not specify roles.",
+          "params": [
+            {
+              "name": "learningResourceId",
+              "description": "The unique identifier of the learning resource."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/learningPathResources/{learningPathResourceId}",
+        "definition": {
+          "entityName": "LearningPathResource",
+          "schema": {
+            "$ref": "#/backend/entities/LearningPathResource"
+          },
+          "description": "Stores the connections between learning paths and learning resources. No specific authorization details as the requirements did not specify roles.",
+          "params": [
+            {
+              "name": "learningPathResourceId",
+              "description": "The unique identifier of the learning path resource."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/progress/{userProgressId}",
+        "definition": {
+          "entityName": "UserProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserProgress"
+          },
+          "description": "Stores user progress for each learning resource. Path-based ownership ensures only the user can access their own progress data. Includes denormalized 'userId' and 'learningPathId' for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "userProgressId",
+              "description": "The unique identifier of the user progress."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the AdaptiveMind AI application, focusing on user authentication, personalized learning paths, content recommendations, and progress tracking. To ensure security, scalability, and debuggability, the structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC (Database-Based Access Control), and QAPs (Rules are not Filters).  \n\nAuthorization Independence is achieved by structuring data in a way that security rules do not rely on hierarchical `get()` calls. User-owned data is stored under the `/users/{userId}` path, while collaborative data uses membership maps. This approach enables atomic operations and simplifies security rule evaluation.\n\nStructural Segregation is implemented by separating data with different access needs into distinct collections. For example, user-specific learning paths are stored under `/users/{userId}/learningPaths/{learningPathId}`. This ensures that each collection has a homogeneous security posture, simplifying rules.\n\nAccess Modeling follows consistent patterns for authorization. Private data is stored using Path-Based ownership (e.g., `/users/{userId}/...`).  This approach is intuitive and secure.  \n\nTo further enhance authorization independence and support efficient `list` operations (QAPs), denormalization is used. For example, if a learning path's access depends on user roles or attributes, these attributes would be copied into the learning path document itself, removing the need for `get()` calls to the user document during rule evaluation.\n\nGlobal roles (DBAC) are implemented using dedicated collections like `/roles_admin/{uid}`. The presence of a document in this collection indicates administrative privileges, simplifying role-based access control.\n\nThe design explicitly models state using the `status` field in the `UserProgress` entity.  This explicit modeling enhances data clarity. The schema also uses semantic naming conventions, like `userId` and `learningPathId`, to improve debuggability.\n\nThis structure enables the application to scale efficiently, maintain data integrity, and enforce robust security rules, while remaining easily debuggable and maintainable."
+  }
+}

@@ -1,0 +1,139 @@
+/**
+ * @file Overview
+ * This ruleset enforces a strict user-ownership model for personal data while allowing public access to learning resources.
+ * Data is organized hierarchically under /users/{userId} for user-specific content, promoting clear ownership and simplified rules.
+ *
+ * Core Philosophy:
+ *  - Strict User Ownership:  Users can only access their own profiles and data nested under their user ID.
+ *  - Public Read Access (Learning Resources): Learning resources are publicly readable.
+ *
+ * Data Structure:
+ *  - /users/{userId}: User profiles and settings.
+ *  - /users/{userId}/learningPaths/{learningPathId}: Learning paths specific to each user.
+ *  - /learningResources/{learningResourceId}: Publicly accessible learning resources.
+ *  - /learningPathResources/{learningPathResourceId}: Connections between learning paths and resources.
+ *  - /users/{userId}/progress/{userProgressId}: User's progress on learning resources.
+ *
+ * Key Security Decisions:
+ *  - No User Listing: Listing all users is explicitly denied to protect privacy.
+ *  - Learning Resources: Public read access to learning resources is allowed.
+ *
+ * Denormalization for Authorization:
+ *  - User-specific data (learning paths, progress) includes the `userId` directly in the document to enable simple `isOwner()` checks.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces user-ownership for user profiles. Only the authenticated user can read/write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - Authenticated user with request.auth.uid == userId can create their profile.
+     * @allow (get, update, delete) - Authenticated user with request.auth.uid == userId can get, update, or delete their profile.
+     * @deny (create) - Authenticated user with mismatched userId.
+     * @deny (get, update, delete) - Unauthenticated user.
+     * @principle Enforces document ownership for writes and requires authentication for all operations.
+     */
+    match /users/{userId} {
+      //isOwner(userId)
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces user-ownership for learning paths within a user's profile.
+     * @path /users/{userId}/learningPaths/{learningPathId}
+     * @allow (create) - Authenticated user with request.auth.uid == userId can create a learning path.
+     * @allow (get, update, delete) - Authenticated user with request.auth.uid == userId can get, update, or delete their learning path.
+     * @deny (create) - Authenticated user with mismatched userId.
+     * @deny (get, update, delete) - Unauthenticated user or mismatched userId.
+     * @principle Enforces document ownership and requires authentication.
+     */
+    match /users/{userId}/learningPaths/{learningPathId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Allows public read access to learning resources. Write access is not defined and thus denied.
+     * @path /learningResources/{learningResourceId}
+     * @allow (get, list) - Any user can read learning resources.
+     * @deny (create, update, delete) - No user can create, update, or delete learning resources (explicitly denied).
+     * @principle Provides public read access while restricting write access.
+     */
+    match /learningResources/{learningResourceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Allows public read access to learning path resources. Write access is not defined and thus denied.
+     * @path /learningPathResources/{learningPathResourceId}
+     * @allow (get, list) - Any user can read learning path resources.
+     * @deny (create, update, delete) - No user can create, update, or delete learning path resources (explicitly denied).
+     * @principle Provides public read access while restricting write access.
+     */
+    match /learningPathResources/{learningPathResourceId} {
+      allow get, list: if true;
+      allow create, update, delete: if false;
+    }
+
+    /**
+     * @description Enforces user-ownership for user progress data.
+     * @path /users/{userId}/progress/{userProgressId}
+     * @allow (create) - Authenticated user with request.auth.uid == userId can create their progress data.
+     * @allow (get, update, delete) - Authenticated user with request.auth.uid == userId can get, update, or delete their progress data.
+     * @deny (create) - Authenticated user with mismatched userId.
+     * @deny (get, update, delete) - Unauthenticated user or mismatched userId.
+     * @principle Enforces document ownership and requires authentication.
+     */
+    match /users/{userId}/progress/{userProgressId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
