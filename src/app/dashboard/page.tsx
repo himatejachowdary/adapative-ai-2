@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send, Loader2, User } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import Link from 'next/link';
 import {
   Sheet,
@@ -16,6 +16,7 @@ import {
 import { UserProfilePanel } from '@/components/app/user-profile-panel';
 import { useRouter } from 'next/navigation';
 import Logo from '@/components/auth/logo';
+import { doc, getDoc } from 'firebase/firestore';
 
 
 interface Message {
@@ -28,22 +29,49 @@ interface Message {
 export default function DashboardPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
+  const firestore = useFirestore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
+    if (isUserLoading) return;
+
+    if (!user) {
       router.push('/');
-    } else if (user) {
-      setUserName(user.displayName || "User");
-      const storedHistory = localStorage.getItem(`am_chat_history_${user.uid}`);
-      if(storedHistory) {
-        setMessages(JSON.parse(storedHistory));
+      return;
+    }
+
+    async function checkOnboarding() {
+      if (user && firestore) {
+        const userDocRef = doc(firestore, 'users', user.uid);
+        try {
+          const userDocSnap = await getDoc(userDocRef);
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            if (!userData.level) {
+              router.push('/onboarding');
+            } else {
+              setUserName(userData.fullName || user.displayName || "User");
+              const storedHistory = localStorage.getItem(`am_chat_history_${user.uid}`);
+              if(storedHistory) {
+                setMessages(JSON.parse(storedHistory));
+              }
+            }
+          } else {
+            // If doc doesn't exist, they are a new user.
+            router.push('/onboarding');
+          }
+        } catch (error) {
+          console.error("Error checking user profile for onboarding:", error);
+          // Fallback to dashboard, but onboarding might be missed.
+        }
       }
     }
-  }, [user, isUserLoading, router]);
+
+    checkOnboarding();
+  }, [user, isUserLoading, router, firestore]);
 
   useEffect(() => {
     if (user && messages.length > 0) {
@@ -103,7 +131,7 @@ export default function DashboardPage() {
     URL.revokeObjectURL(url);
   }
   
-  if (isUserLoading) {
+  if (isUserLoading || !user) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-black text-white">
         <Loader2 className="h-12 w-12 animate-spin" />
@@ -245,3 +273,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
