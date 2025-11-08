@@ -7,28 +7,77 @@ import { Button } from '@/components/ui/button';
 import GoogleIcon from '@/components/icons/google';
 import { useUser } from '@/firebase';
 import { useEffect, useState } from 'react';
-import { initiateGoogleSignIn, useAuth } from '@/firebase';
+import { initiateGoogleSignIn, useAuth, useFirestore } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Logo from '@/components/auth/logo';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function OpeningPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Check for active session in localStorage for immediate redirect
+    if (localStorage.getItem('am_session_active') === 'true') {
+      router.push('/dashboard');
+      return;
+    }
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
 
   const handleGoogleSignIn = async () => {
+    if (!auth || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Firebase not initialized',
+        description: 'Please try again later.',
+      });
+      return;
+    }
     setLoading(true);
     try {
-      await initiateGoogleSignIn(auth);
+      const userCredential = await initiateGoogleSignIn(auth);
+      const user = userCredential.user;
+      
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        // First time login
+        await setDoc(userDocRef, {
+          fullName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          provider: 'google',
+        });
+        toast({
+          title: 'Account Created via Google',
+          description: 'Welcome to AdaptiveMind AI!',
+        });
+      } else {
+        // Returning user
+        await setDoc(userDocRef, { lastLogin: serverTimestamp() }, { merge: true });
+        toast({
+          title: 'Logged In Successfully',
+          description: 'Welcome back!',
+        });
+      }
+
+      // Store session info in localStorage
+      localStorage.setItem('am_session_active', 'true');
+      localStorage.setItem('am_user_uid', user.uid);
+      if(user.email) localStorage.setItem('am_user_email', user.email);
+      if(user.displayName) localStorage.setItem('am_user_name', user.displayName);
+
       // onAuthStateChanged will redirect to /dashboard
     } catch (error: any) {
       console.error('Google Sign-In failed:', error);

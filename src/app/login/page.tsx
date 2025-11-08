@@ -11,16 +11,18 @@ import {
   initiateEmailSignIn,
   initiateGoogleSignIn,
   useAuth,
+  useFirestore,
   useUser,
 } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Loader2 } from 'lucide-react';
-import Logo from '@/components/auth/logo';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
   const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   
   const [email, setEmail] = useState('');
@@ -29,6 +31,10 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
+    if (localStorage.getItem('am_session_active') === 'true') {
+      router.push('/dashboard');
+      return;
+    }
     if (!isUserLoading && user) {
       router.push('/dashboard');
     }
@@ -37,8 +43,23 @@ export default function LoginPage() {
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    if (!auth || !firestore) {
+      toast({ variant: 'destructive', title: 'Firebase not initialized' });
+      setLoading(false);
+      return;
+    }
     try {
-      await initiateEmailSignIn(auth, email, password);
+      const cred = await initiateEmailSignIn(auth, email, password);
+      const user = cred.user;
+      const userDocRef = doc(firestore, "users", user.uid);
+      await setDoc(userDocRef, { lastLogin: serverTimestamp() }, { merge: true });
+
+      localStorage.setItem('am_session_active', 'true');
+      localStorage.setItem('am_user_uid', user.uid);
+      if(user.email) localStorage.setItem('am_user_email', user.email);
+      if(user.displayName) localStorage.setItem('am_user_name', user.displayName);
+      
+      toast({ title: 'Logged In Successfully' });
       // onAuthStateChanged will handle the redirect
     } catch (error: any) {
       console.error('Login failed:', error);
@@ -53,8 +74,38 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
+    if (!auth || !firestore) {
+      toast({ variant: 'destructive', title: 'Firebase not initialized' });
+      setGoogleLoading(false);
+      return;
+    }
     try {
-      await initiateGoogleSignIn(auth);
+      const userCredential = await initiateGoogleSignIn(auth);
+      const user = userCredential.user;
+      
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+          fullName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+          lastLogin: serverTimestamp(),
+          provider: 'google',
+        });
+        toast({ title: 'Account Created via Google' });
+      } else {
+        await setDoc(userDocRef, { lastLogin: serverTimestamp() }, { merge: true });
+        toast({ title: 'Logged In Successfully' });
+      }
+
+      localStorage.setItem('am_session_active', 'true');
+      localStorage.setItem('am_user_uid', user.uid);
+      if(user.email) localStorage.setItem('am_user_email', user.email);
+      if(user.displayName) localStorage.setItem('am_user_name', user.displayName);
+      
       // onAuthStateChanged will redirect
     } catch (error: any) {
       console.error('Google Sign-In failed:', error);

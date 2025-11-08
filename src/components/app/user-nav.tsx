@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -17,8 +18,10 @@ import { useAuth, useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import {
   Sheet,
+  SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { UserProfilePanel } from "./user-profile-panel";
 
 export function UserNav() {
   const { user } = useUser();
@@ -30,6 +33,8 @@ export function UserNav() {
     // Clear local storage/cookies
     localStorage.removeItem('am_session_active');
     localStorage.removeItem('am_user_uid');
+    localStorage.removeItem('am_user_email');
+    localStorage.removeItem('am_user_name');
     localStorage.removeItem('am_chat_history');
     router.push('/');
   };
@@ -47,7 +52,9 @@ export function UserNav() {
             </Avatar>
           </Button>
         </SheetTrigger>
-        {/* SheetContent is handled in dashboard/page.tsx */}
+        <SheetContent className="w-[380px] bg-[#111] border-l border-[#2b2b2b] p-0 text-white">
+           <UserProfilePanel />
+        </SheetContent>
       </Sheet>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
