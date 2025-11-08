@@ -1,0 +1,73 @@
+"use client";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { User, X } from "lucide-react";
+import Link from "next/link";
+
+interface ProfileModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function ProfileModal({ isOpen, onOpenChange }: ProfileModalProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="glassmorphic text-white max-w-md">
+         <DialogClose className="absolute right-4 top-4 rounded-full w-8 h-8 glassmorphic flex items-center justify-center soft-glow-border">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+        <DialogHeader className="items-center text-center space-y-4">
+            <Avatar className="h-24 w-24 border-2 border-white/20">
+                <AvatarFallback className="bg-[#1A1A1A]">
+                    <User className="h-12 w-12 text-[#AAAAAA]" />
+                </AvatarFallback>
+            </Avatar>
+          <div className="space-y-1">
+            <DialogTitle className="text-2xl font-bold">Alex Johnson</DialogTitle>
+            <p className="text-[#AAAAAA] text-sm">alex.j@google.com</p>
+          </div>
+        </DialogHeader>
+        
+        <Separator className="my-4 border-[#333333]" />
+
+        <div className="space-y-4 px-6 text-sm">
+            <h3 className="font-semibold text-white mb-2">Personal Information</h3>
+            <div className="flex justify-between">
+                <span className="text-[#AAAAAA]">Full Name:</span>
+                <span className="font-medium text-white">Alex Johnson</span>
+            </div>
+             <div className="flex justify-between">
+                <span className="text-[#AAAAAA]">Email:</span>
+                <span className="font-medium text-white">alex.j@google.com</span>
+            </div>
+             <div className="flex justify-between">
+                <span className="text-[#AAAAAA]">Phone:</span>
+                <span className="font-medium text-white">Not provided</span>
+            </div>
+            <div className="flex justify-between">
+                <span className="text-[#AAAAAA]">Account Type:</span>
+                <span className="font-medium text-white">Google Linked Account</span>
+            </div>
+        </div>
+
+        <Separator className="my-4 border-[#333333]" />
+
+        <div className="px-6 pb-6">
+            <Button asChild variant="secondary" className="w-full bg-[#1A1A1A] text-white soft-glow-border">
+              <Link href="/">Logout</Link>
+            </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
