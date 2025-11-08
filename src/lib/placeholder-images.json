@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "article-1",
+      "description": "An article about machine learning.",
+      "imageUrl": "https://images.unsplash.com/photo-1610758758876-0680d8c2247c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx0ZWNobm9sb2d5JTIwY29kZXxlbnwwfHx8fDE3NjI1MDI2OTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "technology code"
+    },
+    {
+      "id": "video-1",
+      "description": "A video tutorial on React.",
+      "imageUrl": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxsYXB0b3AlMjBzY3JlZW58ZW58MHx8fHwxNzYyNTM1MjE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "laptop screen"
+    },
+    {
+      "id": "exercise-1",
+      "description": "An interactive coding exercise.",
+      "imageUrl": "https://images.unsplash.com/photo-1607431067517-fda93b3e0aee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGNvZGV8ZW58MHx8fHwxNzYyNTA2NjcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract code"
+    }
+  ]
 }
