@@ -39,15 +39,21 @@ export default function SignupPage() {
 
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault();
+    if (!name || !email || !password) {
+      toast({
+        variant: "destructive",
+        title: "Missing Fields",
+        description: "Please fill out all required fields.",
+      });
+      return;
+    }
     setLoading(true);
     try {
       const userCredential = await initiateEmailSignUp(auth, email, password);
       if (userCredential.user) {
         await updateProfile(userCredential.user, { displayName: name });
-        // Optionally update phone number if your app logic requires it.
-        // Firebase Auth doesn't directly store phone number this way without verification.
+        // After profile update, onAuthStateChanged will trigger redirect via useEffect
       }
-      // onAuthStateChanged will handle the redirect
     } catch (error: any) {
       console.error('Sign up failed:', error);
       toast({
@@ -88,14 +94,12 @@ export default function SignupPage() {
       <Link href="/" className="absolute top-8 left-8 text-[#E5E5E5] hover:text-white transition-colors">
           <ArrowLeft size={24} />
       </Link>
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
-            <Link href="/" className='flex justify-center items-center gap-3 mb-6'>
-                <Logo className="h-8 w-8 text-white" />
-            </Link>
-          <h1 className="text-3xl font-bold text-[#E5E5E5]">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl font-bold text-white">
             Create Your AdaptiveMind AI Account
           </h1>
+          <p className="text-base text-[#A0A0A0]">Fill the details below to start your personalized journey.</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSignUp}>
@@ -106,7 +110,7 @@ export default function SignupPage() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
+            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#7A7A7A] focus:border-[#A0A0A0] focus:ring-0"
             disabled={loading || googleLoading}
           />
           <Input
@@ -115,7 +119,7 @@ export default function SignupPage() {
             placeholder="Phone Number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
+            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#7A7A7A] focus:border-[#A0A0A0] focus:ring-0"
             disabled={loading || googleLoading}
           />
           <Input
@@ -125,7 +129,7 @@ export default function SignupPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
+            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#7A7A7A] focus:border-[#A0A0A0] focus:ring-0"
             disabled={loading || googleLoading}
           />
           <Input
@@ -135,12 +139,12 @@ export default function SignupPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
+            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#7A7A7A] focus:border-[#A0A0A0] focus:ring-0"
             disabled={loading || googleLoading}
           />
           <Button
             type="submit"
-            className="h-12 w-full rounded-[18px] bg-[#1A1A1A] text-lg font-semibold text-white border border-[#2B2B2B] hover:bg-[#262626]"
+            className="h-12 w-full rounded-[20px] bg-[#1A1A1A] text-lg font-semibold text-white border border-[#3A3A3A] hover:bg-[#2C2C2C]"
             disabled={loading || googleLoading}
           >
             {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Sign Up'}
@@ -159,7 +163,7 @@ export default function SignupPage() {
           className="w-full h-12 rounded-[18px] bg-white text-[#3C4043] border border-[#DADCE0] font-medium text-base hover:bg-gray-100"
         >
           {googleLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#3C4043]" />
           ) : (
             <GoogleIcon className="mr-3 h-6 w-6" />
           )}

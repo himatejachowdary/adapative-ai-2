@@ -82,9 +82,6 @@ export default function LoginPage() {
        </Link>
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-            <Link href="/" className='flex justify-center items-center gap-3 mb-6'>
-                <Logo className="h-8 w-8 text-white" />
-            </Link>
           <h1 className="text-3xl font-bold text-[#E5E5E5]">
             Login to AdaptiveMind AI
           </h1>
@@ -113,7 +110,7 @@ export default function LoginPage() {
           />
           <Button
             type="submit"
-            className="h-12 w-full rounded-[18px] bg-[#1A1A1A] text-lg font-semibold text-white border border-[#2B2B2B] hover:bg-[#262626]"
+            className="h-12 w-full rounded-[20px] bg-gradient-to-b from-[#262626] to-[#1A1A1A] text-lg font-semibold text-white border border-[#3A3A3A] hover:from-[#2A2A2A] hover:to-[#1F1F1F]"
             disabled={loading || googleLoading}
           >
             {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Login'}
@@ -132,7 +129,7 @@ export default function LoginPage() {
           className="w-full h-12 rounded-[18px] bg-white text-[#3C4043] border border-[#DADCE0] font-medium text-base hover:bg-gray-100"
         >
           {googleLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-2 h-4 w-4 animate-spin text-[#3C4043]" />
           ) : (
             <GoogleIcon className="mr-3 h-6 w-6" />
           )}
