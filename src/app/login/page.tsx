@@ -68,7 +68,8 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: error.message || 'An unexpected error occurred.',
       });
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -91,6 +92,7 @@ export default function LoginPage() {
           fullName: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
+          level: null,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
           provider: 'google',
@@ -114,7 +116,8 @@ export default function LoginPage() {
         title: 'Google Sign-In Failed',
         description: error.message || 'An unexpected error occurred.',
       });
-      setGoogleLoading(false);
+    } finally {
+        setGoogleLoading(false);
     }
   };
 

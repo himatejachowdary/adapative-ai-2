@@ -68,9 +68,10 @@ export default function SignupPage() {
         const userDocRef = doc(firestore, "users", user.uid);
         await setDoc(userDocRef, {
           fullName: name,
-          email: user.email,
           phone: phone,
-          photoURL: user.photoURL,
+          email: user.email,
+          photoURL: null,
+          level: null,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
           provider: 'password',
@@ -91,7 +92,8 @@ export default function SignupPage() {
         title: 'Sign up Failed',
         description: error.message || 'An unexpected error occurred.',
       });
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -112,8 +114,10 @@ export default function SignupPage() {
       if (!userDocSnap.exists()) {
         await setDoc(userDocRef, {
           fullName: user.displayName,
+          phone: "",
           email: user.email,
           photoURL: user.photoURL,
+          level: null,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
           provider: 'google',
@@ -137,7 +141,8 @@ export default function SignupPage() {
         title: 'Google Sign-In Failed',
         description: error.message || 'An unexpected error occurred.',
       });
-      setGoogleLoading(false);
+    } finally {
+        setGoogleLoading(false);
     }
   };
 

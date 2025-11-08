@@ -55,6 +55,7 @@ export default function OpeningPage() {
           fullName: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
+          level: null,
           createdAt: serverTimestamp(),
           lastLogin: serverTimestamp(),
           provider: 'google',
@@ -86,7 +87,8 @@ export default function OpeningPage() {
         title: 'Google Sign-In Failed',
         description: error.message || 'An unexpected error occurred.',
       });
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
   
@@ -105,8 +107,8 @@ export default function OpeningPage() {
         <div className="text-center space-y-4">
             <div className="flex justify-center items-center gap-4 mb-4">
                 <Logo className="h-12 w-12 text-white" />
-                <h1 className="text-4xl font-bold text-white">AdaptiveMind AI</h1>
             </div>
+          <h1 className="text-4xl font-bold text-white">AdaptiveMind AI</h1>
           <p className="text-lg text-[#E5E5E5]">Personalized AI Learning</p>
         </div>
 
