@@ -1,24 +1,35 @@
+
 'use client';
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormEvent, useState, useEffect } from "react";
-import { initiateEmailSignUp, useAuth, useUser } from "@/firebase";
-import { useRouter } from "next/navigation";
-import { updateProfile } from "firebase/auth";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import GoogleIcon from "@/components/icons/google";
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import GoogleIcon from '@/components/icons/google';
+import { FormEvent, useEffect, useState } from 'react';
+import {
+  initiateEmailSignUp,
+  initiateGoogleSignIn,
+  useAuth,
+  useUser,
+} from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { updateProfile } from 'firebase/auth';
+import Logo from '@/components/auth/logo';
 
 export default function SignupPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
+
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const auth = useAuth();
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -31,41 +42,57 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const userCredential = await initiateEmailSignUp(auth, email, password);
-      if (userCredential && userCredential.user) {
+      if (userCredential.user) {
         await updateProfile(userCredential.user, { displayName: name });
+        // Optionally update phone number if your app logic requires it.
+        // Firebase Auth doesn't directly store phone number this way without verification.
       }
-      // The onAuthStateChanged listener will handle redirect
+      // onAuthStateChanged will handle the redirect
     } catch (error: any) {
-      console.error("Sign up failed:", error);
+      console.error('Sign up failed:', error);
       toast({
-        variant: "destructive",
-        title: "Sign up Failed",
-        description: error.message || "An unexpected error occurred.",
+        variant: 'destructive',
+        title: 'Sign up Failed',
+        description: error.message || 'An unexpected error occurred.',
       });
       setLoading(false);
     }
   };
-  
-  // A placeholder for Google Sign-In logic
-  const handleGoogleSignIn = () => {
-    setLoading(true);
-    // TODO: Implement Google Sign-In logic with Firebase
-    console.log("Attempting Google Sign-In...");
-    toast({
-      title: "Feature not implemented",
-      description: "Google Sign-In is not yet configured.",
-    })
-    setTimeout(() => setLoading(false), 1000);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await initiateGoogleSignIn(auth);
+      // onAuthStateChanged will redirect
+    } catch (error: any) {
+      console.error('Google Sign-In failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-In Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+      setGoogleLoading(false);
+    }
+  };
+
+  if (isUserLoading || user) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-black text-white">
+        <Loader2 className="h-12 w-12 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-black p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-2">
+            <Link href="/" className='flex justify-center items-center gap-3 mb-6'>
+                <Logo className="h-8 w-8 text-white" />
+            </Link>
           <h1 className="text-3xl font-bold text-[#E5E5E5]">
-            Create your Account
+            Create Your AdaptiveMind AI Account
           </h1>
-          <p className="mt-2 text-[#A0A0A0]">Start your personalized learning journey.</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSignUp}>
@@ -77,7 +104,16 @@ export default function SignupPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
-            disabled={loading}
+            disabled={loading || googleLoading}
+          />
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="Phone Number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
+            disabled={loading || googleLoading}
           />
           <Input
             id="email"
@@ -87,7 +123,7 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
-            disabled={loading}
+            disabled={loading || googleLoading}
           />
           <Input
             id="password"
@@ -97,14 +133,14 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
-            disabled={loading}
+            disabled={loading || googleLoading}
           />
           <Button
             type="submit"
-            className="h-14 w-full rounded-[20px] border-[#3A3A3A] bg-gradient-to-b from-[#262626] to-[#1A1A1A] text-lg font-bold text-white hover:from-[#2A2A2A] hover:to-[#1F1F1F]"
-            disabled={loading}
+            className="h-12 w-full rounded-[18px] bg-[#1A1A1A] text-lg font-semibold text-white border border-[#2B2B2B] hover:bg-[#262626]"
+            disabled={loading || googleLoading}
           >
-            {loading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : "Create Account"}
+            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Sign Up'}
           </Button>
         </form>
 
@@ -115,18 +151,24 @@ export default function SignupPage() {
         </div>
 
         <Button
-          variant="outline"
-          className="h-12 w-full rounded-[18px] border-[#3A3A3A] bg-[#262626] text-[#E5E5E5] hover:bg-[#333333] hover:text-white"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={loading || googleLoading}
+          className="w-full h-12 rounded-[18px] bg-white text-[#3C4043] border border-[#DADCE0] font-medium text-base hover:bg-gray-100"
         >
-          <GoogleIcon className="mr-3 h-5 w-5" />
-          Sign Up with Google
+          {googleLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <GoogleIcon className="mr-3 h-6 w-6" />
+          )}
+          Continue with Google
         </Button>
 
         <div className="text-center text-sm text-[#A0A0A0]">
-          Already have an account?{" "}
-          <Link href="/login" className="font-bold text-[#E5E5E5] underline-offset-2 hover:underline">
+          Already have an account?{' '}
+          <Link
+            href="/login"
+            className="font-bold text-[#E5E5E5] underline-offset-2 hover:underline"
+          >
             Login
           </Link>
         </div>

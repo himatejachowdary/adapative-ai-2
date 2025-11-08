@@ -1,22 +1,32 @@
+
 'use client';
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { FormEvent, useEffect, useState } from "react";
-import { initiateEmailSignIn, useAuth, useUser } from "@/firebase";
-import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import GoogleIcon from "@/components/icons/google";
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import GoogleIcon from '@/components/icons/google';
+import { FormEvent, useEffect, useState } from 'react';
+import {
+  initiateEmailSignIn,
+  initiateGoogleSignIn,
+  useAuth,
+  useUser,
+} from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import Logo from '@/components/auth/logo';
 
 export default function LoginPage() {
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const auth = useAuth();
-  const { user, isUserLoading } = useUser();
-  const router = useRouter();
-  const { toast } = useToast();
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -29,34 +39,49 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await initiateEmailSignIn(auth, email, password);
-      // The onAuthStateChanged listener in FirebaseProvider will handle the redirect
+      // onAuthStateChanged will handle the redirect
     } catch (error: any) {
-      console.error("Login failed:", error);
+      console.error('Login failed:', error);
       toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message || "An unexpected error occurred.",
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: error.message || 'An unexpected error occurred.',
       });
       setLoading(false);
     }
   };
-  
-  // A placeholder for Google Sign-In logic
-  const handleGoogleSignIn = () => {
-    setLoading(true);
-    // TODO: Implement Google Sign-In logic with Firebase
-    console.log("Attempting Google Sign-In...");
-    toast({
-      title: "Feature not implemented",
-      description: "Google Sign-In is not yet configured.",
-    })
-    setTimeout(() => setLoading(false), 1000);
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await initiateGoogleSignIn(auth);
+      // onAuthStateChanged will redirect
+    } catch (error: any) {
+      console.error('Google Sign-In failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Google Sign-In Failed',
+        description: error.message || 'An unexpected error occurred.',
+      });
+      setGoogleLoading(false);
+    }
+  };
+
+  if (isUserLoading || user) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-black text-white">
+        <Loader2 className="h-12 w-12 animate-spin" />
+      </div>
+    );
   }
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-black p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center space-y-2">
+            <Link href="/" className='flex justify-center items-center gap-3 mb-6'>
+                <Logo className="h-8 w-8 text-white" />
+            </Link>
           <h1 className="text-3xl font-bold text-[#E5E5E5]">
             Login to AdaptiveMind AI
           </h1>
@@ -71,7 +96,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
-            disabled={loading}
+            disabled={loading || googleLoading}
           />
           <Input
             id="password"
@@ -81,14 +106,14 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="h-12 w-full rounded-[18px] border-[#2B2B2B] bg-[#101010] px-4 text-[#E5E5E5] placeholder:text-[#A0A0A0] focus:border-[#A0A0A0] focus:ring-0"
-            disabled={loading}
+            disabled={loading || googleLoading}
           />
           <Button
             type="submit"
-            className="h-14 w-full rounded-[20px] border-[#3A3A3A] bg-gradient-to-b from-[#262626] to-[#1A1A1A] text-lg font-bold text-white hover:from-[#2A2A2A] hover:to-[#1F1F1F]"
-            disabled={loading}
+            className="h-12 w-full rounded-[18px] bg-[#1A1A1A] text-lg font-semibold text-white border border-[#2B2B2B] hover:bg-[#262626]"
+            disabled={loading || googleLoading}
           >
-            {loading ? <Loader2 className="h-6 w-6 animate-spin text-white" /> : "Login"}
+            {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Login'}
           </Button>
         </form>
 
@@ -99,18 +124,24 @@ export default function LoginPage() {
         </div>
 
         <Button
-          variant="outline"
-          className="h-12 w-full rounded-[18px] border-[#3A3A3A] bg-[#262626] text-[#E5E5E5] hover:bg-[#333333] hover:text-white"
           onClick={handleGoogleSignIn}
-          disabled={loading}
+          disabled={loading || googleLoading}
+          className="w-full h-12 rounded-[18px] bg-white text-[#3C4043] border border-[#DADCE0] font-medium text-base hover:bg-gray-100"
         >
-          <GoogleIcon className="mr-3 h-5 w-5" />
+          {googleLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <GoogleIcon className="mr-3 h-6 w-6" />
+          )}
           Continue with Google
         </Button>
 
         <div className="text-center text-sm text-[#A0A0A0]">
-          Don’t have an account?{" "}
-          <Link href="/signup" className="font-bold text-[#E5E5E5] underline-offset-2 hover:underline">
+          Don’t have an account?{' '}
+          <Link
+            href="/signup"
+            className="font-bold text-[#E5E5E5] underline-offset-2 hover:underline"
+          >
             Sign Up
           </Link>
         </div>
